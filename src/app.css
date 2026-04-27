@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--pkp-teal:      #113F51;
+		--pkp-mid:       #0E5B73;
+		--pkp-gold:      #D5C58A;
+		--pkp-gold-dk:   #CDB278;
+		--pkp-bg:        #f5f7f8;
+	}
+
+	body {
+		background: var(--pkp-bg);
+		color: #1a1a1a;
+		@apply antialiased;
+		font-family: 'Inter', system-ui, sans-serif;
+	}
+
+	h1, h2, h3, h4, h5 {
+		font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+	}
+}

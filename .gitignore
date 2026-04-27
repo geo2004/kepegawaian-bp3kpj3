@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# SvelteKit build output
+.svelte-kit/
+build/
+
+# environment variables (contains SESSION_SECRET + ADMIN_NIP)
+.env
+.env.*
+!.env.example
+
+# local data store (employee data — sensitive, not for version control)
+data/kgb-data.json
+data/documents/
+
+# scripts (one-time import utilities, not part of the app)
+scripts/
+
+# OS
+.DS_Store
+Thumbs.db
