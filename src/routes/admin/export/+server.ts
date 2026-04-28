@@ -26,8 +26,8 @@ function formatTanggal(iso: string | null | undefined): string {
 	return `${parseInt(d)} ${bulan[parseInt(m)]} ${y}`;
 }
 
-export const GET: RequestHandler = () => {
-	const employees = getEmployees({ activeOnly: true });
+export const GET: RequestHandler = async () => {
+	const employees = await getEmployees({ activeOnly: true });
 
 	const rows = employees.map((e, i) => ({
 		'No': i + 1,

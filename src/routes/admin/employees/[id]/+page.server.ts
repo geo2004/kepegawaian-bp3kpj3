@@ -5,10 +5,10 @@ import { saveDocument, deleteDocument, hasDocument } from '$lib/server/documents
 import type { EmployeeInsert } from '$lib/types/database.types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const employee = getEmployeeById(params.id);
+	const employee = await getEmployeeById(params.id);
 	if (!employee) throw error(404, 'Pegawai tidak ditemukan.');
 
-	const history = getKgbHistory(params.id);
+	const history = await getKgbHistory(params.id);
 	const hasDoc = hasDocument(params.id);
 	return { employee, history, hasDoc };
 };
@@ -46,18 +46,18 @@ export const actions: Actions = {
 			updated_by: locals.user?.nip ?? null
 		};
 
-		const updated = updateEmployee(params.id, data);
+		const updated = await updateEmployee(params.id, data);
 		if (!updated) return fail(404, { error: 'Pegawai tidak ditemukan.' });
 
 		throw redirect(303, `/admin/employees/${params.id}`);
 	},
 
 	proses: async ({ params, locals }) => {
-		const emp = getEmployeeById(params.id);
+		const emp = await getEmployeeById(params.id);
 		if (!emp) return fail(404, { error: 'Pegawai tidak ditemukan.' });
 		if (!emp.tanggal_kgb_berikutnya) return fail(400, { error: 'Tanggal KGB belum diset.' });
 
-		createKgbHistory({
+		await createKgbHistory({
 			employee_id: params.id,
 			tanggal_mulai: emp.tanggal_mulai_kgb_terakhir!,
 			tanggal_kgb: emp.tanggal_kgb_berikutnya,
@@ -70,7 +70,7 @@ export const actions: Actions = {
 			created_by: locals.user?.nip ?? null
 		});
 
-		updateEmployee(params.id, {
+		await updateEmployee(params.id, {
 			tanggal_mulai_kgb_terakhir: emp.tanggal_kgb_berikutnya,
 			kgb_status_category: 'sudah_diproses',
 			kgb_status_raw: `Sudah diproses — KGB ${emp.tanggal_kgb_berikutnya}`,

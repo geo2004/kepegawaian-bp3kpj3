@@ -39,7 +39,7 @@ export const actions: Actions = {
 		};
 
 		try {
-			createEmployee(data);
+			await createEmployee(data);
 		} catch (e) {
 			return fail(500, { error: `Gagal menyimpan: ${e}` });
 		}

@@ -29,9 +29,9 @@ export const actions: Actions = {
 			created_by: locals.user?.nip ?? null,
 			updated_by: null
 		}));
-		const { imported, skipped } = upsertEmployees(rows, conflictMode);
+		const { imported, skipped } = await upsertEmployees(rows, conflictMode);
 
-		createImportLog({
+		await createImportLog({
 			filename,
 			sheet_name: sheetName,
 			rows_imported: imported,
@@ -75,7 +75,7 @@ export const actions: Actions = {
 
 		if (!rows.length) return fail(400, { error: 'Tidak ada data enrichment ditemukan di sheet tersebut.' });
 
-		const { updated, notFound } = enrichEmployees(rows);
+		const { updated, notFound } = await enrichEmployees(rows);
 
 		return { enrichSuccess: true, updated, notFound };
 	}

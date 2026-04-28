@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const yearParam = parseInt(url.searchParams.get('year') ?? '');
 	const selectedYear = isNaN(yearParam) ? new Date().getFullYear() : Math.min(2030, Math.max(2026, yearParam));
 
-	const all = getEmployees({ activeOnly: true });
+	const all = await getEmployees({ activeOnly: true });
 
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
@@ -52,6 +52,6 @@ export const load: PageServerLoad = async ({ url }) => {
 		)
 	};
 
-	const recentLogs = getImportLogs(5);
+	const recentLogs = await getImportLogs(5);
 	return { stats, recentLogs };
 };

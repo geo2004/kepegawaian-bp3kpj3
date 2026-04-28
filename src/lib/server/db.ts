@@ -1,6 +1,5 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '$env/static/private';
 import type {
 	EmployeeRow,
 	EmployeeInsert,
@@ -10,208 +9,223 @@ import type {
 	ImportLogInsert
 } from '$lib/types/database.types';
 
-const DB_PATH = join(process.cwd(), 'data', 'kgb-data.json');
-
-interface Store {
-	employees: EmployeeRow[];
-	kgb_history: KgbHistoryRow[];
-	import_logs: ImportLogRow[];
-}
-
-function read(): Store {
-	try {
-		return JSON.parse(readFileSync(DB_PATH, 'utf-8')) as Store;
-	} catch {
-		return { employees: [], kgb_history: [], import_logs: [] };
-	}
-}
-
-function write(store: Store): void {
-	writeFileSync(DB_PATH, JSON.stringify(store, null, 2), 'utf-8');
-}
-
-function now(): string {
-	return new Date().toISOString();
-}
-
-// ── Employees ────────────────────────────────────────────────────────────────
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const KGB_ELIGIBLE_TYPES = ['PNS', 'PPPK', 'PPPK_PARUH_WAKTU'] as const;
 
-export function getEmployees(opts?: {
+// ── Employees ─────────────────────────────────────────────────────────────────
+
+export async function getEmployees(opts?: {
 	search?: string;
 	lokasi?: string;
 	golongan?: string;
 	status?: string;
 	activeOnly?: boolean;
 	kgbEligibleOnly?: boolean;
-}): EmployeeRow[] {
-	const store = read();
-	let rows = store.employees;
+}): Promise<EmployeeRow[]> {
+	let query = supabase.from('employees').select('*').neq('employee_type', 'PPNPN');
 
-	if (opts?.activeOnly !== false) rows = rows.filter((e) => e.is_active);
-	rows = rows.filter((e) => e.employee_type !== 'PPNPN');
-	if (opts?.kgbEligibleOnly) rows = rows.filter((e) => (KGB_ELIGIBLE_TYPES as readonly string[]).includes(e.employee_type));
+	if (opts?.activeOnly !== false) query = query.eq('is_active', true);
+	if (opts?.kgbEligibleOnly) query = query.in('employee_type', [...KGB_ELIGIBLE_TYPES]);
+	if (opts?.lokasi) query = query.eq('lokasi_berkantor', opts.lokasi);
+	if (opts?.golongan) query = query.eq('golongan', opts.golongan);
+	if (opts?.status) query = query.eq('kgb_status_category', opts.status);
 	if (opts?.search) {
-		const s = opts.search.toLowerCase();
-		rows = rows.filter(
-			(e) => e.nama.toLowerCase().includes(s) || (e.nip_nrp ?? '').toLowerCase().includes(s)
-		);
+		const s = opts.search.replace(/[%_]/g, '\\$&');
+		query = query.or(`nama.ilike.%${s}%,nip_nrp.ilike.%${s}%`);
 	}
-	if (opts?.lokasi) rows = rows.filter((e) => e.lokasi_berkantor === opts.lokasi);
-	if (opts?.golongan) rows = rows.filter((e) => e.golongan === opts.golongan);
-	if (opts?.status) rows = rows.filter((e) => e.kgb_status_category === opts.status);
 
-	return rows;
+	const { data, error } = await query;
+	if (error) throw new Error(error.message);
+	return (data ?? []) as EmployeeRow[];
 }
 
-export function getEmployeeById(id: string): EmployeeRow | undefined {
-	return read().employees.find((e) => e.id === id);
+export async function getEmployeeById(id: string): Promise<EmployeeRow | undefined> {
+	const { data, error } = await supabase
+		.from('employees')
+		.select('*')
+		.eq('id', id)
+		.maybeSingle();
+	if (error) return undefined;
+	return (data ?? undefined) as EmployeeRow | undefined;
 }
 
-export function createEmployee(data: EmployeeInsert): EmployeeRow {
-	const store = read();
-	const row: EmployeeRow = {
+export async function createEmployee(data: EmployeeInsert): Promise<EmployeeRow> {
+	const row = {
 		...data,
-		id: randomUUID(),
-		tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir),
-		created_at: now(),
-		updated_at: now()
+		tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir)
 	};
-	store.employees.push(row);
-	write(store);
-	return row;
+	const { data: inserted, error } = await supabase
+		.from('employees')
+		.insert(row)
+		.select()
+		.single();
+	if (error) throw new Error(error.message);
+	return inserted as EmployeeRow;
 }
 
-export function updateEmployee(id: string, data: Partial<EmployeeInsert>): EmployeeRow | null {
-	const store = read();
-	const idx = store.employees.findIndex((e) => e.id === id);
-	if (idx === -1) return null;
-	const updated: EmployeeRow = {
-		...store.employees[idx],
+export async function updateEmployee(
+	id: string,
+	data: Partial<EmployeeInsert>
+): Promise<EmployeeRow | null> {
+	const current = await getEmployeeById(id);
+	if (!current) return null;
+
+	const row = {
 		...data,
 		tanggal_kgb_berikutnya: calcNextKgb(
-			data.tanggal_mulai_kgb_terakhir ?? store.employees[idx].tanggal_mulai_kgb_terakhir
+			data.tanggal_mulai_kgb_terakhir ?? current.tanggal_mulai_kgb_terakhir
 		),
-		updated_at: now()
+		updated_at: new Date().toISOString()
 	};
-	store.employees[idx] = updated;
-	write(store);
-	return updated;
+	const { data: updated, error } = await supabase
+		.from('employees')
+		.update(row)
+		.eq('id', id)
+		.select()
+		.single();
+	if (error) throw new Error(error.message);
+	return updated as EmployeeRow;
 }
 
-export function softDeleteEmployee(id: string): boolean {
-	const store = read();
-	const idx = store.employees.findIndex((e) => e.id === id);
-	if (idx === -1) return false;
-	store.employees[idx].is_active = false;
-	store.employees[idx].updated_at = now();
-	write(store);
-	return true;
+export async function softDeleteEmployee(id: string): Promise<boolean> {
+	const { error } = await supabase
+		.from('employees')
+		.update({ is_active: false, updated_at: new Date().toISOString() })
+		.eq('id', id);
+	return !error;
 }
 
-export function upsertEmployees(
+export async function upsertEmployees(
 	rows: EmployeeInsert[],
 	onConflict: 'skip' | 'overwrite' = 'overwrite'
-): { imported: number; skipped: number } {
-	const store = read();
+): Promise<{ imported: number; skipped: number }> {
 	let imported = 0;
 	let skipped = 0;
 
 	for (const data of rows) {
-		const existingIdx = data.nip_nrp
-			? store.employees.findIndex((e) => e.nip_nrp === data.nip_nrp)
-			: -1;
+		if (!data.nip_nrp) {
+			await supabase.from('employees').insert({
+				...data,
+				tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir)
+			});
+			imported++;
+			continue;
+		}
 
-		if (existingIdx !== -1) {
+		const { data: existing } = await supabase
+			.from('employees')
+			.select('id, jenis_kelamin, jabatan_perbendaharaan')
+			.eq('nip_nrp', data.nip_nrp)
+			.maybeSingle();
+
+		if (existing) {
 			if (onConflict === 'skip') {
 				skipped++;
 			} else {
-				const existing = store.employees[existingIdx];
-				store.employees[existingIdx] = {
-					...existing,
-					...data,
-					// Preserve enrichment fields that parsers always set to null —
-					// only overwrite them if the incoming data explicitly provides a value.
-					jenis_kelamin: data.jenis_kelamin ?? existing.jenis_kelamin,
-					jabatan_perbendaharaan: data.jabatan_perbendaharaan ?? existing.jabatan_perbendaharaan,
-					tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir),
-					updated_at: now()
-				};
+				await supabase
+					.from('employees')
+					.update({
+						...data,
+						jenis_kelamin: data.jenis_kelamin ?? existing.jenis_kelamin,
+						jabatan_perbendaharaan:
+							data.jabatan_perbendaharaan ?? existing.jabatan_perbendaharaan,
+						tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir),
+						updated_at: new Date().toISOString()
+					})
+					.eq('id', existing.id);
 				imported++;
 			}
 		} else {
-			store.employees.push({
+			await supabase.from('employees').insert({
 				...data,
-				id: randomUUID(),
-				tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir),
-				created_at: now(),
-				updated_at: now()
+				tanggal_kgb_berikutnya: calcNextKgb(data.tanggal_mulai_kgb_terakhir)
 			});
 			imported++;
 		}
 	}
 
-	write(store);
 	return { imported, skipped };
 }
 
-export function enrichEmployees(
-	rows: Array<{ nip_nrp: string; jenis_kelamin: string | null; jabatan_perbendaharaan: string | null }>
-): { updated: number; notFound: number } {
-	const store = read();
+export async function enrichEmployees(
+	rows: Array<{
+		nip_nrp: string;
+		jenis_kelamin: string | null;
+		jabatan_perbendaharaan: string | null;
+	}>
+): Promise<{ updated: number; notFound: number }> {
 	let updated = 0;
 	let notFound = 0;
 
 	for (const data of rows) {
-		const idx = store.employees.findIndex((e) => e.nip_nrp === data.nip_nrp);
-		if (idx === -1) {
+		const { data: existing } = await supabase
+			.from('employees')
+			.select('id, jenis_kelamin, jabatan_perbendaharaan')
+			.eq('nip_nrp', data.nip_nrp)
+			.maybeSingle();
+
+		if (!existing) {
 			notFound++;
 		} else {
-			store.employees[idx] = {
-				...store.employees[idx],
-				jenis_kelamin: (data.jenis_kelamin as 'Laki-laki' | 'Perempuan' | null) ?? store.employees[idx].jenis_kelamin,
-				jabatan_perbendaharaan: data.jabatan_perbendaharaan ?? store.employees[idx].jabatan_perbendaharaan,
-				updated_at: now()
-			};
+			await supabase
+				.from('employees')
+				.update({
+					jenis_kelamin: data.jenis_kelamin ?? existing.jenis_kelamin,
+					jabatan_perbendaharaan:
+						data.jabatan_perbendaharaan ?? existing.jabatan_perbendaharaan,
+					updated_at: new Date().toISOString()
+				})
+				.eq('id', existing.id);
 			updated++;
 		}
 	}
 
-	write(store);
 	return { updated, notFound };
 }
 
 // ── KGB History ───────────────────────────────────────────────────────────────
 
-export function getKgbHistory(employeeId: string): KgbHistoryRow[] {
-	return read()
-		.kgb_history.filter((h) => h.employee_id === employeeId)
-		.sort((a, b) => b.tanggal_kgb.localeCompare(a.tanggal_kgb));
+export async function getKgbHistory(employeeId: string): Promise<KgbHistoryRow[]> {
+	const { data, error } = await supabase
+		.from('kgb_history')
+		.select('*')
+		.eq('employee_id', employeeId)
+		.order('tanggal_kgb', { ascending: false });
+	if (error) throw new Error(error.message);
+	return (data ?? []) as KgbHistoryRow[];
 }
 
-export function createKgbHistory(data: KgbHistoryInsert): KgbHistoryRow {
-	const store = read();
-	const row: KgbHistoryRow = { ...data, id: randomUUID(), created_at: now() };
-	store.kgb_history.push(row);
-	write(store);
-	return row;
+export async function createKgbHistory(data: KgbHistoryInsert): Promise<KgbHistoryRow> {
+	const { data: inserted, error } = await supabase
+		.from('kgb_history')
+		.insert(data)
+		.select()
+		.single();
+	if (error) throw new Error(error.message);
+	return inserted as KgbHistoryRow;
 }
 
 // ── Import Logs ───────────────────────────────────────────────────────────────
 
-export function getImportLogs(limit = 10): ImportLogRow[] {
-	return read()
-		.import_logs.sort((a, b) => b.imported_at.localeCompare(a.imported_at))
-		.slice(0, limit);
+export async function getImportLogs(limit = 10): Promise<ImportLogRow[]> {
+	const { data, error } = await supabase
+		.from('import_logs')
+		.select('*')
+		.order('imported_at', { ascending: false })
+		.limit(limit);
+	if (error) throw new Error(error.message);
+	return (data ?? []) as ImportLogRow[];
 }
 
-export function createImportLog(data: ImportLogInsert): ImportLogRow {
-	const store = read();
-	const row: ImportLogRow = { ...data, id: randomUUID(), imported_at: now() };
-	store.import_logs.push(row);
-	write(store);
-	return row;
+export async function createImportLog(data: ImportLogInsert): Promise<ImportLogRow> {
+	const { data: inserted, error } = await supabase
+		.from('import_logs')
+		.insert(data)
+		.select()
+		.single();
+	if (error) throw new Error(error.message);
+	return inserted as ImportLogRow;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

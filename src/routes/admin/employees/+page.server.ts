@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const lokasi = url.searchParams.get('lokasi') ?? '';
 	const tipe = url.searchParams.get('tipe') ?? '';
 
-	const employees: Employee[] = getEmployees({ search, lokasi, activeOnly: true })
+	const employees: Employee[] = (await getEmployees({ search, lokasi, activeOnly: true }))
 		.filter((e) => !tipe || e.employee_type === tipe)
 		.sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
 
@@ -21,7 +21,7 @@ export const actions: Actions = {
 		const id = form.get('id') as string;
 		if (!id) return fail(400, { error: 'ID tidak valid.' });
 
-		const ok = softDeleteEmployee(id);
+		const ok = await softDeleteEmployee(id);
 		if (!ok) return fail(404, { error: 'Pegawai tidak ditemukan.' });
 		return { success: true };
 	}

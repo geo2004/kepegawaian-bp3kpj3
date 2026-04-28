@@ -17,7 +17,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'NIP dan password harus diisi.' });
 		}
 
-		const user = checkNipLogin(nip, password);
+		const user = await checkNipLogin(nip, password);
 		if (!user) {
 			return fail(401, { error: 'NIP atau password salah.' });
 		}

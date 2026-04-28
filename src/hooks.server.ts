@@ -12,7 +12,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (session) {
 		// Hydrate user name from current employee data
-		const employees = getEmployees({ activeOnly: true });
+		const employees = await getEmployees({ activeOnly: true });
 		const employee = employees.find((e) => e.nip_nrp === session.nip);
 		event.locals.user = employee
 			? { nip: session.nip, nama: employee.nama }

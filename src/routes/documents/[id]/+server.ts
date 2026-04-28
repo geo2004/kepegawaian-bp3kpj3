@@ -3,8 +3,8 @@ import type { RequestHandler } from './$types';
 import { readDocument } from '$lib/server/documents';
 import { getEmployeeById } from '$lib/server/db';
 
-export const GET: RequestHandler = ({ params }) => {
-	const employee = getEmployeeById(params.id);
+export const GET: RequestHandler = async ({ params }) => {
+	const employee = await getEmployeeById(params.id);
 	if (!employee) throw error(404, 'Pegawai tidak ditemukan.');
 
 	const buffer = readDocument(params.id);

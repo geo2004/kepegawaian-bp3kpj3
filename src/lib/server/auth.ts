@@ -38,9 +38,9 @@ export function verifySessionToken(token: string): { nip: string } | null {
 }
 
 /** Check NIP exists in employee data and password matches NIP */
-export function checkNipLogin(nip: string, password: string): { nip: string; nama: string } | null {
+export async function checkNipLogin(nip: string, password: string): Promise<{ nip: string; nama: string } | null> {
 	if (!nip || !password) return null;
-	const employees = getEmployees({ activeOnly: true });
+	const employees = await getEmployees({ activeOnly: true });
 	const employee = employees.find((e) => e.nip_nrp === nip);
 	if (!employee) return null;
 	try {

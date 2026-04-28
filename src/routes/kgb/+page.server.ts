@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	const yearParam = parseInt(url.searchParams.get('year') ?? '');
 	const selectedYear = isNaN(yearParam) ? new Date().getFullYear() : Math.min(2030, Math.max(2026, yearParam));
 
-	const employees = getEmployees({ search, lokasi, golongan, status, activeOnly: true, kgbEligibleOnly: true });
+	const employees = await getEmployees({ search, lokasi, golongan, status, activeOnly: true, kgbEligibleOnly: true });
 
 	const BOTTOM_STATUSES = ['maksimum', 'tidak_eligible'];
 
