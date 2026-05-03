@@ -197,7 +197,7 @@
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Terakhir</th>
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Berikutnya</th>
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
-						<th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">SK KGB</th>
+						<th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">SK KGB Terakhir</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-100">
