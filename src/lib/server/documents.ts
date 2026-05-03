@@ -29,8 +29,10 @@ export async function saveDocument(employeeId: string, buffer: Buffer): Promise<
 export async function readDocument(employeeId: string): Promise<Buffer | null> {
 	try {
 		const info = await head(blobPath(employeeId), { token: BLOB_READ_WRITE_TOKEN });
-		// downloadUrl includes a short-lived signed token valid for private blobs
-		const res = await fetch(info.downloadUrl);
+		// Private blobs require the token in the Authorization header
+		const res = await fetch(info.url, {
+			headers: { Authorization: `Bearer ${BLOB_READ_WRITE_TOKEN}` }
+		});
 		if (!res.ok) return null;
 		return Buffer.from(await res.arrayBuffer());
 	} catch {
