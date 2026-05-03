@@ -6,6 +6,8 @@
 
 	let { data }: { data: PageData } = $props();
 
+	const docIdSet = new Set(data.docIds);
+
 	let search = $state(data.filters.search ?? '');
 	let lokasi = $state(data.filters.lokasi ?? '');
 	let golongan = $state(data.filters.golongan ?? '');
@@ -195,6 +197,7 @@
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Terakhir</th>
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Berikutnya</th>
 						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
+						<th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">SK KGB</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-100">
@@ -226,10 +229,27 @@
 									{statusDisplay.label}
 								</span>
 							</td>
+							<td class="px-4 py-3 text-center">
+								{#if docIdSet.has(emp.id)}
+									<a
+										href="/documents/{emp.id}"
+										target="_blank"
+										rel="noopener noreferrer"
+										title="Lihat SK KGB"
+										class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+											<path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0-6a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3z" clip-rule="evenodd" />
+										</svg>
+									</a>
+								{:else}
+									<span class="text-gray-300 text-xs">—</span>
+								{/if}
+							</td>
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="9" class="px-4 py-12 text-center text-gray-400">
+							<td colspan="10" class="px-4 py-12 text-center text-gray-400">
 								Tidak ada data pegawai ditemukan.
 							</td>
 						</tr>

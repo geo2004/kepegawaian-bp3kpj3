@@ -1,4 +1,4 @@
-import { put, del, head } from '@vercel/blob';
+import { put, del, head, list } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 
 const PREFIX = 'documents';
@@ -38,6 +38,23 @@ export async function readDocument(employeeId: string): Promise<Buffer | null> {
 	} catch {
 		return null;
 	}
+}
+
+/** Returns a Set of employee IDs that currently have a document in Vercel Blob. */
+export async function listDocumentIds(): Promise<Set<string>> {
+	const ids = new Set<string>();
+	let cursor: string | undefined;
+	do {
+		const result = await list({ prefix: `${PREFIX}/`, token: BLOB_READ_WRITE_TOKEN, cursor, limit: 1000 });
+		for (const blob of result.blobs) {
+			// pathname is like "documents/{uuid}.pdf"
+			const filename = blob.pathname.slice(PREFIX.length + 1); // "{uuid}.pdf"
+			const id = filename.replace(/\.pdf$/i, '');
+			if (id) ids.add(id);
+		}
+		cursor = result.cursor;
+	} while (cursor);
+	return ids;
 }
 
 export async function deleteDocument(employeeId: string): Promise<boolean> {

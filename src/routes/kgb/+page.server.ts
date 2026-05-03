@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import type { DashboardStats } from '$lib/types/app.types';
 import { getEmployees } from '$lib/server/db';
+import { listDocumentIds } from '$lib/server/documents';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const search = url.searchParams.get('search') ?? '';
@@ -12,7 +13,10 @@ export const load: PageServerLoad = async ({ url }) => {
 	const yearParam = parseInt(url.searchParams.get('year') ?? '');
 	const selectedYear = isNaN(yearParam) ? new Date().getFullYear() : Math.min(2030, Math.max(2026, yearParam));
 
-	const employees = await getEmployees({ search, lokasi, golongan, status, activeOnly: true, kgbEligibleOnly: true });
+	const [employees, docIds] = await Promise.all([
+		getEmployees({ search, lokasi, golongan, status, activeOnly: true, kgbEligibleOnly: true }),
+		listDocumentIds()
+	]);
 
 	const BOTTOM_STATUSES = ['maksimum', 'tidak_eligible'];
 
@@ -100,5 +104,5 @@ export const load: PageServerLoad = async ({ url }) => {
 		);
 	}
 
-	return { employees: filtered, stats, filters: { search, lokasi, golongan, status, year: selectedYear, card } };
+	return { employees: filtered, docIds: [...docIds], stats, filters: { search, lokasi, golongan, status, year: selectedYear, card } };
 };
