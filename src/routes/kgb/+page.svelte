@@ -184,44 +184,45 @@
 
 	<!-- Table -->
 	<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-		<div class="overflow-x-auto">
+		<div>
 			<table class="w-full text-sm">
 				<thead>
 					<tr class="bg-gray-50 border-b border-gray-200">
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">No</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Nama</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">NIP/NRP</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Golongan</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Jabatan</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Lokasi</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Terakhir</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">KGB Berikutnya</th>
-						<th class="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
-						<th class="px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">SK KGB Terakhir</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider w-8">No</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Nama</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">NIP/NRP</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Jabatan</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider whitespace-nowrap">Tanggal KGB</th>
+						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
+						<th class="px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider whitespace-nowrap">SK KGB Terakhir</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-100">
 					{#each data.employees as emp, i}
 						{@const statusDisplay = getKgbStatusDisplay(emp)}
 						<tr class="hover:bg-gray-50 transition-colors">
-							<td class="px-4 py-3 text-gray-500">{i + 1}</td>
-							<td class="px-4 py-3">
+							<td class="px-3 py-3 text-gray-400 text-xs">{i + 1}</td>
+							<td class="px-3 py-3">
 								<div class="font-medium text-gray-900">{emp.nama}</div>
 								{#if emp.sub_unit}
 									<div class="text-xs text-gray-400">{emp.sub_unit}</div>
 								{/if}
+								<div class="flex items-center gap-2 mt-0.5">
+									{#if emp.golongan}
+										<span class="text-xs font-mono text-gray-500">{emp.golongan}</span>
+									{/if}
+									<span class="text-xs text-gray-400">{emp.lokasi_berkantor}</span>
+								</div>
 							</td>
-							<td class="px-4 py-3 text-gray-600 font-mono text-xs">{emp.nip_nrp ?? '-'}</td>
-							<td class="px-4 py-3 text-gray-700">{emp.golongan ?? '-'}</td>
-							<td class="px-4 py-3 text-gray-600 max-w-48 truncate">{emp.jabatan ?? '-'}</td>
-							<td class="px-4 py-3 text-gray-600 text-xs">{emp.lokasi_berkantor}</td>
-							<td class="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
-								{formatTanggal(emp.tanggal_mulai_kgb_terakhir)}
+							<td class="px-3 py-3 text-gray-600 font-mono text-xs">{emp.nip_nrp ?? '-'}</td>
+							<td class="px-3 py-3 text-gray-600 text-xs max-w-52">
+								<div class="truncate">{emp.jabatan ?? '-'}</div>
 							</td>
-							<td class="px-4 py-3 text-gray-700 text-xs whitespace-nowrap font-medium">
-								{formatTanggal(emp.tanggal_kgb_berikutnya)}
+							<td class="px-3 py-3 text-xs whitespace-nowrap">
+								<div class="text-gray-400">{formatTanggal(emp.tanggal_mulai_kgb_terakhir)}</div>
+								<div class="text-gray-700 font-medium">{formatTanggal(emp.tanggal_kgb_berikutnya)}</div>
 							</td>
-							<td class="px-4 py-3">
+							<td class="px-3 py-3">
 								<span
 									class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {statusDisplay.bgClass} {statusDisplay.textClass}"
 								>
@@ -229,7 +230,7 @@
 									{statusDisplay.label}
 								</span>
 							</td>
-							<td class="px-4 py-3 text-center">
+							<td class="px-3 py-3 text-center">
 								{#if docIdSet.has(emp.id)}
 									<a
 										href="/documents/{emp.id}"
@@ -249,7 +250,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="10" class="px-4 py-12 text-center text-gray-400">
+							<td colspan="7" class="px-4 py-12 text-center text-gray-400">
 								Tidak ada data pegawai ditemukan.
 							</td>
 						</tr>
