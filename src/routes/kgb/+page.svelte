@@ -192,7 +192,10 @@
 						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Nama</th>
 						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">NIP/NRP</th>
 						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Jabatan</th>
-						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider whitespace-nowrap">Tanggal KGB</th>
+						<th class="text-left px-3 py-3 font-semibold text-xs uppercase tracking-wider whitespace-nowrap">
+							<div class="text-gray-400">KGB Terakhir</div>
+							<div class="text-gray-600">KGB Berikutnya</div>
+						</th>
 						<th class="text-left px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
 						<th class="px-3 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wider whitespace-nowrap">SK KGB Terakhir</th>
 					</tr>

@@ -91,22 +91,24 @@
 		</div>
 	</div>
 
-	<!-- Table — scrolls vertically, header stays sticky -->
-	<div class="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-6">
-		<div class="bg-white rounded-xl border border-gray-200">
-			<table class="w-full text-sm" style="table-layout: fixed;">
+	<!-- Table — fixed header + independently scrolling body inside the rounded wrapper -->
+	<div class="flex-1 overflow-hidden px-6 pb-6">
+		<div class="bg-white rounded-xl border border-gray-200 flex flex-col h-full overflow-hidden">
+
+			<!-- Fixed header (separate table so scrollbar doesn't shift column widths) -->
+			<table class="w-full text-sm shrink-0" style="table-layout: fixed;">
 				<colgroup>
-					<col style="width:22%">  <!-- Nama -->
-					<col style="width:14%">  <!-- NIP -->
-					<col style="width:10%">  <!-- Tipe -->
-					<col style="width:6%">   <!-- Gol -->
-					<col style="width:24%">  <!-- Jabatan -->
-					<col style="width:13%">  <!-- Lokasi -->
-					<col style="width:5%">   <!-- JK -->
-					<col style="width:6%">   <!-- Aksi -->
+					<col style="width:22%">
+					<col style="width:14%">
+					<col style="width:10%">
+					<col style="width:6%">
+					<col style="width:24%">
+					<col style="width:13%">
+					<col style="width:5%">
+					<col style="width:6%">
 				</colgroup>
-				<thead class="sticky top-0 z-10" style="box-shadow: 0 1px 0 #e5e7eb;">
-					<tr class="bg-gray-50">
+				<thead>
+					<tr class="bg-gray-50 border-b border-gray-200">
 						<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Nama</th>
 						<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">NIP / NRP</th>
 						<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipe</th>
@@ -117,63 +119,80 @@
 						<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Aksi</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-gray-100">
-					{#each data.employees as emp}
-						<tr class="hover:bg-gray-50">
-							<td class="px-4 py-3">
-								<a
-									href="/admin/employees/{emp.id}"
-									class="font-medium hover:underline truncate block"
-									style="color:#0E5B73"
-								>{emp.nama}</a>
-								{#if emp.sub_unit}
-									<div class="text-xs text-gray-400 mt-0.5 truncate">{emp.sub_unit}</div>
-								{/if}
-							</td>
-							<td class="px-4 py-3 font-mono text-xs text-gray-500 truncate">{emp.nip_nrp ?? '—'}</td>
-							<td class="px-4 py-3">
-								<span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap {TIPE_BADGE[emp.employee_type] ?? 'bg-gray-100 text-gray-600'}">
-									{TIPE_LABELS[emp.employee_type] ?? emp.employee_type}
-								</span>
-							</td>
-							<td class="px-4 py-3 text-gray-700 text-xs">{emp.golongan ?? '—'}</td>
-							<td class="px-4 py-3">
-								<div class="text-gray-700 truncate">{emp.jabatan ?? '—'}</div>
-								{#if emp.jabatan_perbendaharaan}
-									<div class="text-xs text-gray-400 truncate mt-0.5">{emp.jabatan_perbendaharaan}</div>
-								{/if}
-							</td>
-							<td class="px-4 py-3 text-xs text-gray-600 truncate">{emp.lokasi_berkantor}</td>
-							<td class="px-4 py-3 text-xs text-gray-600">
-								{emp.jenis_kelamin === 'Laki-laki' ? 'L' : emp.jenis_kelamin === 'Perempuan' ? 'P' : '—'}
-							</td>
-							<td class="px-4 py-3">
-								<div class="flex gap-2">
-									<a href="/admin/employees/{emp.id}" class="text-xs font-medium hover:underline" style="color:#0E5B73">
-										Edit
-									</a>
-									<form method="POST" action="?/delete" class="inline">
-										<input type="hidden" name="id" value={emp.id} />
-										<button
-											type="submit"
-											onclick={(e) => {
-												if (!confirm(`Hapus pegawai "${emp.nama}"?`)) e.preventDefault();
-											}}
-											class="text-xs text-red-500 hover:text-red-700 font-medium"
-										>
-											Hapus
-										</button>
-									</form>
-								</div>
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="8" class="px-4 py-12 text-center text-gray-400">Tidak ada data.</td>
-						</tr>
-					{/each}
-				</tbody>
 			</table>
+
+			<!-- Scrollable body -->
+			<div class="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+				<table class="w-full text-sm" style="table-layout: fixed;">
+					<colgroup>
+						<col style="width:22%">
+						<col style="width:14%">
+						<col style="width:10%">
+						<col style="width:6%">
+						<col style="width:24%">
+						<col style="width:13%">
+						<col style="width:5%">
+						<col style="width:6%">
+					</colgroup>
+					<tbody class="divide-y divide-gray-100">
+						{#each data.employees as emp}
+							<tr class="hover:bg-gray-50">
+								<td class="px-4 py-3">
+									<a
+										href="/admin/employees/{emp.id}"
+										class="font-medium hover:underline truncate block"
+										style="color:#0E5B73"
+									>{emp.nama}</a>
+									{#if emp.sub_unit}
+										<div class="text-xs text-gray-400 mt-0.5 truncate">{emp.sub_unit}</div>
+									{/if}
+								</td>
+								<td class="px-4 py-3 font-mono text-xs text-gray-500 truncate">{emp.nip_nrp ?? '—'}</td>
+								<td class="px-4 py-3">
+									<span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap {TIPE_BADGE[emp.employee_type] ?? 'bg-gray-100 text-gray-600'}">
+										{TIPE_LABELS[emp.employee_type] ?? emp.employee_type}
+									</span>
+								</td>
+								<td class="px-4 py-3 text-gray-700 text-xs">{emp.golongan ?? '—'}</td>
+								<td class="px-4 py-3">
+									<div class="text-gray-700 truncate">{emp.jabatan ?? '—'}</div>
+									{#if emp.jabatan_perbendaharaan}
+										<div class="text-xs text-gray-400 truncate mt-0.5">{emp.jabatan_perbendaharaan}</div>
+									{/if}
+								</td>
+								<td class="px-4 py-3 text-xs text-gray-600 truncate">{emp.lokasi_berkantor}</td>
+								<td class="px-4 py-3 text-xs text-gray-600">
+									{emp.jenis_kelamin === 'Laki-laki' ? 'L' : emp.jenis_kelamin === 'Perempuan' ? 'P' : '—'}
+								</td>
+								<td class="px-4 py-3">
+									<div class="flex gap-2">
+										<a href="/admin/employees/{emp.id}" class="text-xs font-medium hover:underline" style="color:#0E5B73">
+											Edit
+										</a>
+										<form method="POST" action="?/delete" class="inline">
+											<input type="hidden" name="id" value={emp.id} />
+											<button
+												type="submit"
+												onclick={(e) => {
+													if (!confirm(`Hapus pegawai "${emp.nama}"?`)) e.preventDefault();
+												}}
+												class="text-xs text-red-500 hover:text-red-700 font-medium"
+											>
+												Hapus
+											</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+						{:else}
+							<tr>
+								<td colspan="8" class="px-4 py-12 text-center text-gray-400">Tidak ada data.</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+
 		</div>
 	</div>
 </div>
