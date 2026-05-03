@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	const employee = await getEmployeeById(params.id);
 	if (!employee) throw error(404, 'Pegawai tidak ditemukan.');
 
-	const buffer = readDocument(params.id);
+	const buffer = await readDocument(params.id);
 	if (!buffer) throw error(404, 'Dokumen belum tersedia.');
 
 	const filename = `SK-KGB-${employee.nip_nrp ?? employee.id}.pdf`;

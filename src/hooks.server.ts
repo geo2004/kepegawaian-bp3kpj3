@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
 import { verifySessionToken, isAdminNip, SESSION_COOKIE } from '$lib/server/auth';
-import { getEmployees } from '$lib/server/db';
+import { getEmployeeByNip } from '$lib/server/db';
 
 // Routes that do NOT require a login
 const PUBLIC_PATHS = ['/login', '/auth/logout'];
@@ -11,9 +11,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const session = token ? verifySessionToken(token) : null;
 
 	if (session) {
-		// Hydrate user name from current employee data
-		const employees = await getEmployees({ activeOnly: true });
-		const employee = employees.find((e) => e.nip_nrp === session.nip);
+		// Targeted single-row lookup — avoids fetching all 132 employees on every request
+		const employee = await getEmployeeByNip(session.nip);
 		event.locals.user = employee
 			? { nip: session.nip, nama: employee.nama }
 			: { nip: session.nip, nama: session.nip };

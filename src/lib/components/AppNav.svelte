@@ -44,7 +44,7 @@
 						style={isActive(mod.href)
 							? 'background:#D5C58A; color:#113F51; font-weight:600;'
 							: 'color:rgba(255,255,255,0.65);'}
-						onmouseenter={(e) => { if (!isActive(mod.href)) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#fff'; }}
+						onmouseenter={(e) => { if (!isActive(mod.href)) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#fff'; } }}
 						onmouseleave={(e) => { if (!isActive(mod.href)) { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; } }}
 					>
 						{mod.label}

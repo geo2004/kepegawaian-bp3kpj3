@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { ADMIN_NIP, SESSION_SECRET } from '$env/static/private';
-import { getEmployees } from '$lib/server/db';
+import { getEmployeeByNip } from '$lib/server/db';
 
 export const SESSION_COOKIE = 'kepegawaian_session';
 const SESSION_TTL_MS = 1000 * 60 * 60 * 8; // 8 hours
@@ -40,8 +40,7 @@ export function verifySessionToken(token: string): { nip: string } | null {
 /** Check NIP exists in employee data and password matches NIP */
 export async function checkNipLogin(nip: string, password: string): Promise<{ nip: string; nama: string } | null> {
 	if (!nip || !password) return null;
-	const employees = await getEmployees({ activeOnly: true });
-	const employee = employees.find((e) => e.nip_nrp === nip);
+	const employee = await getEmployeeByNip(nip);
 	if (!employee) return null;
 	try {
 		if (!timingSafeEqual(Buffer.from(password), Buffer.from(nip))) return null;

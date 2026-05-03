@@ -40,6 +40,16 @@ export async function getEmployees(opts?: {
 	return (data ?? []) as EmployeeRow[];
 }
 
+export async function getEmployeeByNip(nip: string): Promise<Pick<EmployeeRow, 'nip_nrp' | 'nama'> | undefined> {
+	const { data } = await supabase
+		.from('employees')
+		.select('nip_nrp, nama')
+		.eq('nip_nrp', nip)
+		.eq('is_active', true)
+		.maybeSingle();
+	return (data ?? undefined) as Pick<EmployeeRow, 'nip_nrp' | 'nama'> | undefined;
+}
+
 export async function getEmployeeById(id: string): Promise<EmployeeRow | undefined> {
 	const { data, error } = await supabase
 		.from('employees')

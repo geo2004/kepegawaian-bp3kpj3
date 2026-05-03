@@ -9,7 +9,8 @@
 		kategorisasiJabatan,
 		namaJabatanTertentu,
 		shortenSubUnit,
-		LOKASI_DISPLAY
+		LOKASI_DISPLAY,
+		TIPE_DISPLAY
 	} from '$lib/utils/analytics';
 
 	let { data }: { data: PageData } = $props();
@@ -59,7 +60,7 @@
 
 	const filtered = $derived(
 		employees.filter((e: EmployeeRow) => {
-			if (filterTipe && e.employee_type !== filterTipe) return false;
+			if (filterTipe && (TIPE_DISPLAY[e.employee_type] ?? e.employee_type) !== filterTipe) return false;
 			// Compare against display label since stats.byLokasi uses display labels
 			if (filterLokasi && (LOKASI_DISPLAY[e.lokasi_berkantor] ?? e.lokasi_berkantor) !== filterLokasi) return false;
 			if (filterSubUnit && (e.sub_unit ?? '-') !== filterSubUnit) return false;

@@ -5,11 +5,12 @@ import { saveDocument, deleteDocument, hasDocument } from '$lib/server/documents
 import type { EmployeeInsert } from '$lib/types/database.types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	const employee = await getEmployeeById(params.id);
+	const [employee, history, hasDoc] = await Promise.all([
+		getEmployeeById(params.id),
+		getKgbHistory(params.id),
+		hasDocument(params.id)
+	]);
 	if (!employee) throw error(404, 'Pegawai tidak ditemukan.');
-
-	const history = await getKgbHistory(params.id);
-	const hasDoc = hasDocument(params.id);
 	return { employee, history, hasDoc };
 };
 
@@ -89,13 +90,13 @@ export const actions: Actions = {
 		if (file.size > 10 * 1024 * 1024) return fail(400, { error: 'Ukuran file maksimal 10 MB.' });
 
 		const buffer = Buffer.from(await file.arrayBuffer());
-		saveDocument(params.id, buffer);
+		await saveDocument(params.id, buffer);
 
 		return { uploadSuccess: true };
 	},
 
 	deletedoc: async ({ params }) => {
-		deleteDocument(params.id);
+		await deleteDocument(params.id);
 		return { deleteSuccess: true };
 	}
 };

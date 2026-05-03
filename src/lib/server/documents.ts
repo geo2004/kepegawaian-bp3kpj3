@@ -1,34 +1,48 @@
-import { existsSync, mkdirSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { put, del, head } from '@vercel/blob';
+import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 
-const DOCS_DIR = join(process.cwd(), 'data', 'documents');
+const PREFIX = 'documents';
 
-function ensureDir() {
-	if (!existsSync(DOCS_DIR)) mkdirSync(DOCS_DIR, { recursive: true });
+function blobPath(employeeId: string): string {
+	return `${PREFIX}/${employeeId}.pdf`;
 }
 
-function filePath(employeeId: string): string {
-	return join(DOCS_DIR, `${employeeId}.pdf`);
+export async function hasDocument(employeeId: string): Promise<boolean> {
+	try {
+		const info = await head(blobPath(employeeId), { token: BLOB_READ_WRITE_TOKEN });
+		return !!info;
+	} catch {
+		return false;
+	}
 }
 
-export function hasDocument(employeeId: string): boolean {
-	return existsSync(filePath(employeeId));
+export async function saveDocument(employeeId: string, buffer: Buffer): Promise<string> {
+	const result = await put(blobPath(employeeId), buffer, {
+		access: 'private',
+		contentType: 'application/pdf',
+		addRandomSuffix: false,
+		token: BLOB_READ_WRITE_TOKEN
+	});
+	return result.url;
 }
 
-export function saveDocument(employeeId: string, buffer: Buffer): void {
-	ensureDir();
-	writeFileSync(filePath(employeeId), buffer);
+export async function readDocument(employeeId: string): Promise<Buffer | null> {
+	try {
+		const info = await head(blobPath(employeeId), { token: BLOB_READ_WRITE_TOKEN });
+		// downloadUrl includes a short-lived signed token valid for private blobs
+		const res = await fetch(info.downloadUrl);
+		if (!res.ok) return null;
+		return Buffer.from(await res.arrayBuffer());
+	} catch {
+		return null;
+	}
 }
 
-export function readDocument(employeeId: string): Buffer | null {
-	const p = filePath(employeeId);
-	if (!existsSync(p)) return null;
-	return readFileSync(p);
-}
-
-export function deleteDocument(employeeId: string): boolean {
-	const p = filePath(employeeId);
-	if (!existsSync(p)) return false;
-	unlinkSync(p);
-	return true;
+export async function deleteDocument(employeeId: string): Promise<boolean> {
+	try {
+		await del(blobPath(employeeId), { token: BLOB_READ_WRITE_TOKEN });
+		return true;
+	} catch {
+		return false;
+	}
 }

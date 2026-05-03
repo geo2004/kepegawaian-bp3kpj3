@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, url }) => {
 		const form = await request.formData();
 		const nip = (form.get('nip') as string)?.trim();
 		const password = form.get('password') as string;
@@ -27,6 +27,7 @@ export const actions: Actions = {
 			path: '/',
 			httpOnly: true,
 			sameSite: 'lax',
+			secure: url.protocol === 'https:',
 			maxAge: 60 * 60 * 8
 		});
 
