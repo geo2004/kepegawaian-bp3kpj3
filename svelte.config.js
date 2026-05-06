@@ -5,7 +5,12 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter({ runtime: 'nodejs20.x' })
+		adapter: adapter({ runtime: 'nodejs20.x' }),
+		csrf: {
+			// Disable origin check so the GRIYA kiosk (Electron) can submit forms.
+			// The app uses its own session-cookie auth, so CSRF origin check is redundant.
+			checkOrigin: false
+		}
 	}
 };
 
